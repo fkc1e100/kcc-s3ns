@@ -105,6 +105,16 @@ func (t *universeDomainRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 			clonedReq.URL.Host = strings.Replace(clonedReq.URL.Host, ".googleapis.com", "."+t.universeDomain, 1)
 			clonedReq.Host = clonedReq.URL.Host
 		}
+		if clonedReq.URL.Host == "www."+t.universeDomain {
+			// In sovereign/custom universes, services have dedicated subdomains (e.g. compute.<universeDomain>)
+			// rather than a unified www. gateway. Map /<service>/... to <service>.<universeDomain>.
+			trimmedPath := strings.TrimPrefix(clonedReq.URL.Path, "/")
+			parts := strings.SplitN(trimmedPath, "/", 2)
+			if len(parts) > 0 && parts[0] != "" {
+				clonedReq.URL.Host = parts[0] + "." + t.universeDomain
+				clonedReq.Host = clonedReq.URL.Host
+			}
+		}
 		if strings.Contains(clonedReq.URL.Path, ".iam.gserviceaccount.com") {
 			clonedReq.URL.Path = rewritePartitionedSAEmails(clonedReq.URL.Path)
 		}

@@ -157,4 +157,16 @@ func TestUniverseDomainRoundTripper(t *testing.T) {
 	if mock.lastReq.URL.Path != expectedPath {
 		t.Errorf("expected path %q, got %q", expectedPath, mock.lastReq.URL.Path)
 	}
+	// Test www.googleapis.com mapping to service subdomain
+	wwwReq, err := http.NewRequest("GET", "https://www.googleapis.com/compute/beta/projects/eu0:kcc-eval-de/zones/u-germany-northeast1-a/instanceGroupManagers", nil)
+	if err != nil {
+		t.Fatalf("unexpected error creating www request: %v", err)
+	}
+	_, err = rt.RoundTrip(wwwReq)
+	if err != nil {
+		t.Fatalf("unexpected error in RoundTrip: %v", err)
+	}
+	if mock.lastReq.URL.Host != "compute.apis-berlin-build0.goog" {
+		t.Errorf("expected host compute.apis-berlin-build0.goog, got %q", mock.lastReq.URL.Host)
+	}
 }
