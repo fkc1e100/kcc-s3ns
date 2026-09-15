@@ -140,7 +140,7 @@ func TestUniverseDomainRoundTripper(t *testing.T) {
 	mock := &mockRoundTripper{}
 	rt := gcp.NewUniverseDomainRoundTripper(mock, "apis-berlin-build0.goog")
 
-	req, err := http.NewRequest("GET", "https://compute.googleapis.com/compute/v1/projects/eu0:kcc-eval-de/global/networks", nil)
+	req, err := http.NewRequest("GET", "https://iam.googleapis.com/v1/projects/eu0:kcc-eval-de/serviceAccounts/kcc-test-sa@eu0:kcc-eval-de.iam.gserviceaccount.com", nil)
 	if err != nil {
 		t.Fatalf("unexpected error creating request: %v", err)
 	}
@@ -150,10 +150,11 @@ func TestUniverseDomainRoundTripper(t *testing.T) {
 		t.Fatalf("unexpected error in RoundTrip: %v", err)
 	}
 
-	if mock.lastReq.URL.Host != "compute.apis-berlin-build0.goog" {
-		t.Errorf("expected host compute.apis-berlin-build0.goog, got %q", mock.lastReq.URL.Host)
+	if mock.lastReq.URL.Host != "iam.apis-berlin-build0.goog" {
+		t.Errorf("expected host iam.apis-berlin-build0.goog, got %q", mock.lastReq.URL.Host)
 	}
-	if mock.lastReq.Host != "compute.apis-berlin-build0.goog" {
-		t.Errorf("expected req.Host compute.apis-berlin-build0.goog, got %q", mock.lastReq.Host)
+	expectedPath := "/v1/projects/eu0:kcc-eval-de/serviceAccounts/kcc-test-sa@kcc-eval-de.eu0.iam.gserviceaccount.com"
+	if mock.lastReq.URL.Path != expectedPath {
+		t.Errorf("expected path %q, got %q", expectedPath, mock.lastReq.URL.Path)
 	}
 }
