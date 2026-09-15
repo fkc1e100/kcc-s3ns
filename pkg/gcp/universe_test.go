@@ -15,6 +15,7 @@
 package gcp_test
 
 import (
+	"net/http"
 	"os"
 	"testing"
 
@@ -123,5 +124,36 @@ func TestFormatEndpoint(t *testing.T) {
 	os.Setenv(gcp.UniverseDomainEnvVar, "apis-paris-build0.goog")
 	if ep := gcp.FormatEndpoint("pubsub", ""); ep != "pubsub.apis-paris-build0.goog:443" {
 		t.Errorf("expected pubsub.apis-paris-build0.goog:443, got %q", ep)
+	}
+}
+
+type mockRoundTripper struct {
+	lastReq *http.Request
+}
+
+func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	m.lastReq = req
+	return &http.Response{StatusCode: 200}, nil
+}
+
+func TestUniverseDomainRoundTripper(t *testing.T) {
+	mock := &mockRoundTripper{}
+	rt := gcp.NewUniverseDomainRoundTripper(mock, "apis-berlin-build0.goog")
+
+	req, err := http.NewRequest("GET", "https://compute.googleapis.com/compute/v1/projects/eu0:kcc-eval-de/global/networks", nil)
+	if err != nil {
+		t.Fatalf("unexpected error creating request: %v", err)
+	}
+
+	_, err = rt.RoundTrip(req)
+	if err != nil {
+		t.Fatalf("unexpected error in RoundTrip: %v", err)
+	}
+
+	if mock.lastReq.URL.Host != "compute.apis-berlin-build0.goog" {
+		t.Errorf("expected host compute.apis-berlin-build0.goog, got %q", mock.lastReq.URL.Host)
+	}
+	if mock.lastReq.Host != "compute.apis-berlin-build0.goog" {
+		t.Errorf("expected req.Host compute.apis-berlin-build0.goog, got %q", mock.lastReq.Host)
 	}
 }
